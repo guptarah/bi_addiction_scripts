@@ -3,8 +3,59 @@
 # script to get the distribution of NVV over the counserlor/client codes
 
 annotation_dir=$1
-nvv_supplied=$2
 
+# First get annotation statistics
+rm /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+
+codes=(adp adw af co di ec fa fi gi nc quc quo rcp rcw rec res st su wa)
+NVVs=(ah um eh uh)
+
+cat $annotation_dir/* | grep 'counselor.' | wc -l
+
+for code in ${codes[@]} 
+do
+	to_grep='counselor.'$code
+	echo $to_grep
+	# get the number of codes
+	code_freq=$(cat $annotation_dir/* | grep $to_grep | wc -l)
+	
+	# get the NVV stats in each of the codes
+	code_freq_um=$(cat $annotation_dir/* | grep $to_grep | grep ' um ' | wc -l)
+	code_freq_ah=$(cat $annotation_dir/* | grep $to_grep | grep ' ah ' | wc -l)
+	code_freq_eh=$(cat $annotation_dir/* | grep $to_grep | grep ' eh ' | wc -l)
+	code_freq_uh=$(cat $annotation_dir/* | grep $to_grep | grep ' uh ' | wc -l)
+
+	code_freq_laugh=$(cat $annotation_dir/* | grep $to_grep | grep '\[laugh\]|\[laughs\]|\[laughter\]' | wc -l)	
+
+	code_freq_like=$(cat $annotation_dir/* | grep $to_grep | grep '( like )' | wc -l)
+
+	code_freq_yk=$(cat $annotation_dir/* | grep $to_grep | grep '( you know )' | wc -l)
+
+	# get the total number of NVVs 
+        code_freq_um2=$(cat $annotation_dir/* | grep ' um ' | grep 'counselor.' | wc -l)
+        code_freq_ah2=$(cat $annotation_dir/* | grep ' ah ' | grep 'counselor.' | wc -l)
+        code_freq_eh2=$(cat $annotation_dir/* | grep ' eh ' | grep 'counselor.' | wc -l)
+        code_freq_uh2=$(cat $annotation_dir/* | grep ' uh ' | grep 'counselor.' | wc -l)
+
+        code_freq_laugh2=$(cat $annotation_dir/* | grep '\[laugh\]|\[laughs\]|\[laughter\]' | grep 'counselor.' | wc -l)
+
+        code_freq_like2=$(cat $annotation_dir/* | grep '( like )' | grep 'counselor.' | wc -l)
+
+        code_freq_yk2=$(cat $annotation_dir/* | grep '( you know )' | grep 'counselor.' | wc -l)
+
+
+	echo $to_grep >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo 'CF um ah eh uh la lk yk' >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo $code_freq $code_freq_um $code_freq_ah $code_freq_eh $code_freq_uh $code_freq_laugh $code_freq_like $code_freq_yk >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo $code_freq $code_freq_um2 $code_freq_ah2 $code_freq_eh2 $code_freq_uh2 $code_freq_laugh2 $code_freq_like2 $code_freq_yk2 >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo "" >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats 
+done
+
+
+reflection_codes='counselor.rec|counselor.res'
+question_codes='counselor.quc|counselor.quo'
+gi_code='counselor.gi'
+fa_code='counselor.fa'
 
 
 
