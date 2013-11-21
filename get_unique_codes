@@ -1,0 +1,8 @@
+#! /bin/bash
+
+# script to get the unique codes over all the annotations
+
+annotations_dir=$1 # give the name of the directory given by BO
+
+cat $annotations_dir/*JD* | cut -f6 | sort -u > MISC_codes
+

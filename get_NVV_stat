@@ -1,0 +1,10 @@
+#! /bin/bash
+
+# script to get the distribution of NVV over the counserlor/client codes
+
+annotation_dir=$1
+nvv_supplied=$2
+
+
+
+
