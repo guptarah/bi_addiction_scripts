@@ -12,50 +12,88 @@ NVVs=(ah um eh uh)
 
 cat $annotation_dir/* | grep 'counselor.' | wc -l
 
-for code in ${codes[@]} 
+#for code in ${codes[@]} 
+#do
+#	to_grep='counselor.'$code
+#	echo $to_grep
+#	# get the number of codes
+#	code_freq=$(cat $annotation_dir/* | grep $to_grep | wc -l)
+#	
+#	# get the NVV stats in each of the codes
+#	code_freq_um=$(cat $annotation_dir/* | grep $to_grep | grep ' um ' | wc -l)
+#	code_freq_ah=$(cat $annotation_dir/* | grep $to_grep | grep ' ah ' | wc -l)
+#	code_freq_eh=$(cat $annotation_dir/* | grep $to_grep | grep ' eh ' | wc -l)
+#	code_freq_uh=$(cat $annotation_dir/* | grep $to_grep | grep ' uh ' | wc -l)
+#
+#	code_freq_laugh=$(cat $annotation_dir/* | grep $to_grep | grep '\[laugh\]|\[laughs\]|\[laughter\]' | wc -l)	
+#
+#	code_freq_like=$(cat $annotation_dir/* | grep $to_grep | grep '( like )' | wc -l)
+#
+#	code_freq_yk=$(cat $annotation_dir/* | grep $to_grep | grep '( you know )' | wc -l)
+#
+#	# get the total number of NVVs 
+#        code_freq_um2=$(cat $annotation_dir/* | grep ' um ' | grep 'counselor.' | wc -l)
+#        code_freq_ah2=$(cat $annotation_dir/* | grep ' ah ' | grep 'counselor.' | wc -l)
+#        code_freq_eh2=$(cat $annotation_dir/* | grep ' eh ' | grep 'counselor.' | wc -l)
+#        code_freq_uh2=$(cat $annotation_dir/* | grep ' uh ' | grep 'counselor.' | wc -l)
+#
+#        code_freq_laugh2=$(cat $annotation_dir/* | grep '\[laugh\]|\[laughs\]|\[laughter\]' | grep 'counselor.' | wc -l)
+#
+#        code_freq_like2=$(cat $annotation_dir/* | grep '( like )' | grep 'counselor.' | wc -l)
+#
+#        code_freq_yk2=$(cat $annotation_dir/* | grep '( you know )' | grep 'counselor.' | wc -l)
+#
+#
+#	echo $to_grep >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+#	echo 'CF um ah eh uh la lk yk' >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+#	echo $code_freq $code_freq_um $code_freq_ah $code_freq_eh $code_freq_uh $code_freq_laugh $code_freq_like $code_freq_yk >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+#	echo $code_freq $code_freq_um2 $code_freq_ah2 $code_freq_eh2 $code_freq_uh2 $code_freq_laugh2 $code_freq_like2 $code_freq_yk2 >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+#	echo "" >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats 
+#done
+#
+
+reflection_codes="'counselor.rec|counselor.res'"
+question_codes="'counselor.quc|counselor.quo'"
+gi_code="'counselor.gi'"
+fa_code="'counselor.fa'"
+
+
+relevant_codes=(counselor.rec\|counselor.res counselor.quc\|counselor.quo counselor.gi counselor.fa)
+for code in ${relevant_codes[@]}  
 do
-	to_grep='counselor.'$code
-	echo $to_grep
-	# get the number of codes
-	code_freq=$(cat $annotation_dir/* | grep $to_grep | wc -l)
+	cat $annotation_dir/* | egrep $code |  wc -l
+	code_freq=$(cat $annotation_dir/* | egrep $code | wc -l)
+
+	code_freq_um=$(cat $annotation_dir/* | egrep $code | grep 'um' | wc -l)
+	freq_um=$(cat $annotation_dir/* | grep 'um' | grep 'counselor.' | wc -l)
+
+	code_freq_uh=$(cat $annotation_dir/* | egrep $code | grep 'uh' | wc -l)
+	freq_uh=$(cat $annotation_dir/* | grep 'uh' | grep 'counselor.' | wc -l)
+
+	code_freq_eh=$(cat $annotation_dir/* | egrep $code | grep 'eh' | wc -l)
+	freq_eh=$(cat $annotation_dir/* | grep 'eh' | grep 'counselor.' | wc -l)
+
+	code_freq_ah=$(cat $annotation_dir/* | egrep $code | grep 'ah' | wc -l)
+	freq_ah=$(cat $annotation_dir/* | grep 'ah' | grep 'counselor.' | wc -l)
 	
-	# get the NVV stats in each of the codes
-	code_freq_um=$(cat $annotation_dir/* | grep $to_grep | grep ' um ' | wc -l)
-	code_freq_ah=$(cat $annotation_dir/* | grep $to_grep | grep ' ah ' | wc -l)
-	code_freq_eh=$(cat $annotation_dir/* | grep $to_grep | grep ' eh ' | wc -l)
-	code_freq_uh=$(cat $annotation_dir/* | grep $to_grep | grep ' uh ' | wc -l)
+	code_freq_laugh=$(cat $annotation_dir/* | egrep $code | egrep '\[laugh\]|\[laughs\]|\[laughter\]' | wc -l)
+	freq_laugh=$(cat $annotation_dir/* | egrep '\[laugh\]|\[laughs\]|\[laughter\]' | grep 'counselor.' | wc -l)
 
-	code_freq_laugh=$(cat $annotation_dir/* | grep $to_grep | grep '\[laugh\]|\[laughs\]|\[laughter\]' | wc -l)	
+	code_freq_like=$(cat $annotation_dir/* | egrep $code | egrep '( like )' | wc -l)
+	freq_like=$(cat $annotation_dir/* | egrep '( like )' | grep 'counselor.' | wc -l)
 
-	code_freq_like=$(cat $annotation_dir/* | grep $to_grep | grep '( like )' | wc -l)
+	code_freq_yk=$(cat $annotation_dir/* | egrep $code | egrep '( you know )' | wc -l)
+	freq_yk=$(cat $annotation_dir/* | egrep '( you know )' | grep 'counselor.' | wc -l)
 
-	code_freq_yk=$(cat $annotation_dir/* | grep $to_grep | grep '( you know )' | wc -l)
-
-	# get the total number of NVVs 
-        code_freq_um2=$(cat $annotation_dir/* | grep ' um ' | grep 'counselor.' | wc -l)
-        code_freq_ah2=$(cat $annotation_dir/* | grep ' ah ' | grep 'counselor.' | wc -l)
-        code_freq_eh2=$(cat $annotation_dir/* | grep ' eh ' | grep 'counselor.' | wc -l)
-        code_freq_uh2=$(cat $annotation_dir/* | grep ' uh ' | grep 'counselor.' | wc -l)
-
-        code_freq_laugh2=$(cat $annotation_dir/* | grep '\[laugh\]|\[laughs\]|\[laughter\]' | grep 'counselor.' | wc -l)
-
-        code_freq_like2=$(cat $annotation_dir/* | grep '( like )' | grep 'counselor.' | wc -l)
-
-        code_freq_yk2=$(cat $annotation_dir/* | grep '( you know )' | grep 'counselor.' | wc -l)
-
-
-	echo $to_grep >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
-	echo 'CF um ah eh uh la lk yk' >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
-	echo $code_freq $code_freq_um $code_freq_ah $code_freq_eh $code_freq_uh $code_freq_laugh $code_freq_like $code_freq_yk >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
-	echo $code_freq $code_freq_um2 $code_freq_ah2 $code_freq_eh2 $code_freq_uh2 $code_freq_laugh2 $code_freq_like2 $code_freq_yk2 >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
-	echo "" >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats 
+	echo "" >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo $code $code_freq >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo "um uh eh ah laugh like yk" >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
+	echo $code_freq_um"/"$freq_um $code_freq_uh"/"$freq_uh $code_freq_eh"/"$freq_eh $code_freq_ah"/"$freq_ah $code_freq_laugh"/"$freq_laugh $code_freq_like"/"$freq_like $code_freq_yk"/"$freq_yk >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
 done
 
 
-reflection_codes='counselor.rec|counselor.res'
-question_codes='counselor.quc|counselor.quo'
-gi_code='counselor.gi'
-fa_code='counselor.fa'
+# get stats for all other codes
 
 
-
+	code_freq=$(cat $annotation_dir/* | grep -E '(counselor.|counselor.res|counselor.quc|counselor.quo|counselor.gi|counselor.fa)' | wc -l)
+	echo $code_freq >> /home/rcf-proj/mv/guptarah/bi_addiction_dataset/scripts/stats
