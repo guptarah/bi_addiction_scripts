@@ -1,0 +1,32 @@
+#! /bin/bash
+
+annotation_dir=$1
+raw_train_file=$2
+
+to_tokenize_train_file=$raw_train_file'.to_tokenize'
+tokenized_file=$raw_train_file'.tokenized'
+bigram_file=$raw_train_file'.bigram'
+feature_file=$raw_train_file'.features'
+lables_file=$raw_train_file'.lables'
+unique_words=$raw_train_file'.unq_words'
+
+for file in $annotation_dir/*    # leave one file out
+do
+	cat !($file) | cut -f6,8 > $raw_train_file
+			
+	# clean the raw file to remove disfluencies
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep 'counselor.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
+
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep 'counselor.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
+
+	moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_train_file >$tokenized_file
+	
+	paste -d'_' <(sed 's/\ /\n/g' $tokenized_file) <(sed 's/\ /\n/g' $tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' | head -n -1  > $bigram_file
+
+	# get the file with features and lables
+	paste -d' ' <(sed 's/\.$//g' $tokenized_file) <(cat $bigram_file) | sed 's/  / /g' > $feature_file
+	
+	# get the list of unique words
+	grep -o -E '[a-z,_,\.,-]*' $feature_file  | sort -u | less -N >$unique_words
+
+done

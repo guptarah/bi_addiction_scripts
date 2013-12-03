@@ -1,0 +1,31 @@
+#! /bin/bash
+
+# get the word statistics for each unique word
+raw_train_file=$1 # the file name prepended to all the files in make_training_file file
+
+unique_words=$raw_train_file'.unq_words' 
+feature_file=$raw_train_file'.features' 
+lables_file=$raw_train_file'.lables' 
+data_file=$raw_train_file'.data_file'
+cur_code_data_tmp=$raw_train_file'.code_data_tmp'
+word_count_file=$raw_train_file.'word_count'
+word_count_tmp=$raw_train_file.'word_count_tmp'
+
+paste $lables_file $feature_file >$data_file
+
+used_codes=(couns.ques couns.gi couns.fa couns.ref couns.other)
+
+echo -n "" >$word_count_file
+for code in  ${used_codes[@]} 
+do
+	grep $code $data_file | cut -f2 | sed 's/^/ /g;s/$/ /g'> $cur_code_data_tmp
+	rm $word_count_tmp
+	while read line
+	do
+		word_count=$(grep " $line " $cur_$cur_code_data_tmp | wc -l)
+		echo $word_count >> $word_count_tmp 	
+	done < $unique_words
+
+	paste $word_count_file $word_count_tmp >temp2
+	mv temp2 $word_count_file
+done 
