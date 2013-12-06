@@ -1,0 +1,4 @@
+get_unique_codes : get the unique set of codes as annotated by JD
+make_training_file : makes the feature file with all the features, a file with the corresponding lables, a list of unique words in the training file
+get_word_statistics : bash script to generate the number of occurrences for each word for each of the codes
+get_word_entropies.py : A script to give a *.word_count.unselected file. It has a 1 for the word which has is not selected.

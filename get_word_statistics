@@ -8,8 +8,8 @@ feature_file=$raw_train_file'.features'
 lables_file=$raw_train_file'.lables' 
 data_file=$raw_train_file'.data_file'
 cur_code_data_tmp=$raw_train_file'.code_data_tmp'
-word_count_file=$raw_train_file.'word_count'
-word_count_tmp=$raw_train_file.'word_count_tmp'
+word_count_file=$raw_train_file'.word_count'
+word_count_tmp=$raw_train_file'.word_count_tmp'
 
 paste $lables_file $feature_file >$data_file
 

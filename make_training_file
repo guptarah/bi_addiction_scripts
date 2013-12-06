@@ -1,32 +1,105 @@
 #! /bin/bash
 
 annotation_dir=$1
-raw_train_file=$2
 
-to_tokenize_train_file=$raw_train_file'.to_tokenize'
-tokenized_file=$raw_train_file'.tokenized'
-bigram_file=$raw_train_file'.bigram'
-feature_file=$raw_train_file'.features'
-lables_file=$raw_train_file'.lables'
-unique_words=$raw_train_file'.unq_words'
+rm -r ../data_splits
+mkdir ../data_splits
 
 for file in $annotation_dir/*    # leave one file out
 do
-	cat !($file) | cut -f6,8 > $raw_train_file
+
+	echo "performing experiment for file :"$(basename $file)
+
+	save_dir='../data_splits/'$(basename $file)
+	mkdir $save_dir 
+	raw_train_file=$save_dir'/raw_train'
+	to_tokenize_train_file=$raw_train_file'.to_tokenize'
+	tokenized_file=$raw_train_file'.tokenized'
+	bigram_file=$raw_train_file'.bigram'
+	feature_file=$raw_train_file'.features'
+	lables_file=$raw_train_file'.lables'
+	unique_words=$raw_train_file'.unq_words'
+
+	###########################
+	# Prepare the training file
+	###########################
+
+#	cat_file_names=$(echo $annotation_dir'!('$(basename $file)')')
+#	echo $cat_file_names
+#	cat $cat_file_names | cut -f6,8 > $raw_train_file
+
+	cat $(ls $annotation_dir/* | grep -v $(basename $file))  | cut -f6,8 > $raw_train_file
 			
 	# clean the raw file to remove disfluencies
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep 'counselor.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
 
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep 'counselor.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
 
 	moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_train_file >$tokenized_file
 	
-	paste -d'_' <(sed 's/\ /\n/g' $tokenized_file) <(sed 's/\ /\n/g' $tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' | head -n -1  > $bigram_file
+	paste -d'_' <(sed 's/\ /\n/g' $tokenized_file) <(sed 's/\ /\n/g' $tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g'  > $bigram_file
 
 	# get the file with features and lables
 	paste -d' ' <(sed 's/\.$//g' $tokenized_file) <(cat $bigram_file) | sed 's/  / /g' > $feature_file
 	
 	# get the list of unique words
-	grep -o -E '[a-z,_,\.,-]*' $feature_file  | sort -u | less -N >$unique_words
+	grep -o -E '[^\ ]*' $feature_file  | sort -u | less -N >$unique_words
+	
+	# get the statistics of the unique words
+	./get_word_statistics $raw_train_file
 
+	# get the entropies based on the word count obtained from above file
+	python get_word_entropies.py $raw_train_file.'word_count'
+
+	# get script to remove unselected words 
+	paste $raw_train_file.'word_count.unselected' $unique_words | grep "1\.000" | cut -f2  | sed 's/^/ sed -i s\/\\ /g' | sed 's/$/\\ \/\\ \/g \$2 /g' | sed 's/\./\\./g;s/\&/\\&/g;s/\_/\\_/g;s/\;/\\;/g' | sed '1icp \$1 \$2 ' | sed '1i#! /bin/bash' > $raw_train_file'.replace_command'
+	chmod +x $raw_train_file.'replace_command'
+	./$raw_train_file.'replace_command' $raw_train_file'.features' $raw_train_file'.features_ds'	
+
+	# make raw training file
+	paste -d' ' $lables_file $raw_train_file'.features_ds' >$raw_train_file'.train_file'
+
+	# train a maxent model	
+	maxent $raw_train_file'.train_file' -m $raw_train_file'.model' -i 30
+
+	
+	############################
+	# Prepare the test file
+	############################
+	raw_test_file=$save_dir'/raw_test'
+        to_tokenize_test_file=$raw_test_file'.to_tokenize'
+        test_tokenized_file=$raw_test_file'.tokenized'
+        test_bigram_file=$raw_test_file'.bigram'
+        test_feature_file=$raw_test_file'.features'
+        test_lables_file=$raw_test_file'.lables'
+        test_unique_words=$raw_test_file'.unq_words'
+	
+	
+	cat $file | cut -f6,8 > $raw_test_file
+
+	# clean the raw file to remove disfluencies
+        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
+
+        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
+
+        moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_test_file >$test_tokenized_file
+        
+        paste -d'_' <(sed 's/\ /\n/g' $test_tokenized_file) <(sed 's/\ /\n/g' $test_tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' > $test_bigram_file
+ 	# get the file with features and lables
+        paste -d' ' <(sed 's/\.$//g' $test_tokenized_file) <(cat $test_bigram_file) | sed 's/  / /g' > $test_feature_file
+        
+        # get the list of unique words
+        grep -o -E '[^\ ]*' $test_feature_file  | sort -u | less -N >$test_unique_words
+        
+	# remove the words unselected while training 
+       ./$raw_train_file.'replace_command' $raw_test_file'.features' $raw_test_file'.features_ds'
+ 
+	# make the test file
+	paste -d' ' $test_lables_file $raw_test_file'.features_ds' >$raw_test_file'.test_file'
+
+	# save the predictions for the test file
+	maxent -p $raw_test_file'.test_file' -m $raw_train_file'.model' -o $raw_test_file'.test_file.prediction'
+
+	# create a file with true class and predicted class
+	paste $test_lables_file $raw_test_file'.test_file.prediction' >$raw_test_file'.test_file.prediction_n_true'
 done
