@@ -2,15 +2,15 @@
 
 annotation_dir=$1
 
-rm -r ../data_splits
-mkdir ../data_splits
+rm -r ../data_splits_NVV
+mkdir ../data_splits_NVV
 
 for file in $annotation_dir/*    # leave one file out
 do
 
 	echo "performing experiment for file :"$(basename $file)
 
-	save_dir='../data_splits/'$(basename $file)
+	save_dir='../data_splits_NVV/'$(basename $file)
 	mkdir $save_dir 
 	raw_train_file=$save_dir'/raw_train'
 	to_tokenize_train_file=$raw_train_file'.to_tokenize'
@@ -30,17 +30,13 @@ do
 
 	cat $(ls $annotation_dir/* | grep -v $(basename $file))  | cut -f6,8 > $raw_train_file
 			
-	# clean the raw file to remove disfluencies
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/\tum / /g;s/\tuh / /g;s/\teh / /g;s/\tah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
+	# clean the raw file to remove revision and repetions 
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
 
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/\tum / /g;s/\tuh / /g;s/\teh / /g;s/\tah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
-
-	
+	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
 
 	moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_train_file >$tokenized_file
 	
-	cat $tokenized_file | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' > $tokenized_file.'tmp' && mv $tokenized_file.'tmp' $tokenized_file
-
 	paste -d'_' <(sed 's/\ /\n/g' $tokenized_file) <(sed 's/\ /\n/g' $tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g'  > $bigram_file
 
 	# get the file with features and lables
@@ -81,15 +77,13 @@ do
 	
 	cat $file | cut -f6,8 > $raw_test_file
 
-	# clean the raw file to remove disfluencies
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/\tum / /g;s/\tuh / /g;s/\teh / /g;s/\tah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
+	# clean the raw file to remove repetiotions and revisions
+        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
 
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/\tum / /g;s/\tuh / /g;s/\teh / /g;s/\tah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
+        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
 
         moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_test_file >$test_tokenized_file
-       
-	cat $test_tokenized_file | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' > $test_tokenized_file.'tmp' && mv $test_tokenized_file.'tmp' $test_tokenized_file
- 
+        
         paste -d'_' <(sed 's/\ /\n/g' $test_tokenized_file) <(sed 's/\ /\n/g' $test_tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' > $test_bigram_file
  	# get the file with features and lables
         paste -d' ' <(sed 's/\.$//g' $test_tokenized_file) <(cat $test_bigram_file) | sed 's/  / /g' > $test_feature_file
