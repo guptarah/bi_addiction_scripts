@@ -5,8 +5,11 @@ import math
 from os import system
 import numpy
 
+# get the directory 
+dir_current=sys.argv[1] # give the name of the directory where all the files are stored
+
 # concatenate results of all files together
-command = 'cat ../data_splits/*/*prediction_n_true | sed \'s/couns\.ques/0/g;s/couns\.gi/1/g;s/couns\.fa/2/g;s/couns\.ref/3/g;s/couns\.other/4/g\' > all_results'
+command = 'cat '+dir_current+'/*/*prediction_n_true | sed \'s/couns\.ques/0/g;s/couns\.gi/1/g;s/couns\.fa/2/g;s/couns\.ref/3/g;s/couns\.other/4/g\' > all_results'
 system(command)
 
 results=numpy.genfromtxt('all_results',dtype='int')

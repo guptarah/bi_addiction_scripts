@@ -31,9 +31,9 @@ do
 	cat $(ls $annotation_dir/* | grep -v $(basename $file))  | cut -f6,8 > $raw_train_file
 			
 	# clean the raw file to remove revision and repetions 
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
+	cat $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f2 | sed 's/([^)]*)//g;s/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
 
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
+	cat $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
 
 	moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_train_file >$tokenized_file
 	
@@ -78,9 +78,9 @@ do
 	cat $file | cut -f6,8 > $raw_test_file
 
 	# clean the raw file to remove repetiotions and revisions
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
+        cat $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f2 | sed 's/([^)]*)//g;s/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
 
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
+        cat $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' |grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
 
         moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_test_file >$test_tokenized_file
         

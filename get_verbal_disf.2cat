@@ -1,0 +1,15 @@
+#! /bin/bash
+
+# this script will give these features for each file
+# 1. you know or like occur as a verbal disfluency
+# 2. there is a restatement in an utterance
+
+# first get everything in brackets
+raw_file=$1
+grep '^counselor\.' $raw_file | cut -f2 |  sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g'  | sed 's/^/~~/g;s/$/~~/g' | sed 's/~~[^),^(]*~~//g' |  sed 's/^[^(]*(//g;s/)[^(]*(//g;s/)[^(]*$//g' > $raw_file'.all_dis'
+
+sed 's/ you know /~~/g;s/ like /~~/g' $raw_file'.all_dis' | sed 's/[^~]*//g' | sed 's/~[~]*/yk/g' >$raw_file'.yk'
+
+sed 's/ like //g;s/ you know //g' $raw_file'.all_dis' | sed 's/[^\ ][^\ ]*/~/g' | sed 's/ //g' | sed 's/~[~]*/vr/g' >$raw_file'.verbal_restate'
+
+paste -d' ' <(cat $raw_file'.yk' ) <(cat $raw_file'.verbal_restate') | sed 's/  / /g;s/^ //g;s/ $//g' | tr 'a-z' 'A-Z' > $raw_file'.verbal_dis'

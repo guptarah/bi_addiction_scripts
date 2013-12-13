@@ -2,15 +2,15 @@
 
 annotation_dir=$1
 
-rm -r ../data_splits
-mkdir ../data_splits
+rm -r ../data_splits_NVV_VD.2cat
+mkdir ../data_splits_NVV_VD.2cat
 
 for file in $annotation_dir/*    # leave one file out
 do
 
 	echo "performing experiment for file :"$(basename $file)
 
-	save_dir='../data_splits/'$(basename $file)
+	save_dir='../data_splits_NVV_VD.2cat/'$(basename $file)
 	mkdir $save_dir 
 	raw_train_file=$save_dir'/raw_train'
 	to_tokenize_train_file=$raw_train_file'.to_tokenize'
@@ -30,21 +30,23 @@ do
 
 	cat $(ls $annotation_dir/* | grep -v $(basename $file))  | cut -f6,8 > $raw_train_file
 			
-	# clean the raw file to remove disfluencies
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
+	# clean the raw file to remove revision and repetions 
+	cat $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f2 | sed 's/([^)]*)//g;s/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_train_file
 
-	sed 's/([^)]*)//g' $raw_train_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
-
-	
+	cat $raw_train_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $lables_file
 
 	moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_train_file >$tokenized_file
 	
-	cat $tokenized_file | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' > $tokenized_file.'tmp' && mv $tokenized_file.'tmp' $tokenized_file
-
 	paste -d'_' <(sed 's/\ /\n/g' $tokenized_file) <(sed 's/\ /\n/g' $tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g'  > $bigram_file
 
 	# get the file with features and lables
 	paste -d' ' <(sed 's/\.$//g' $tokenized_file) <(cat $bigram_file) | sed 's/  / /g' > $feature_file
+
+	# get the verbal disfluency features
+        ./get_verbal_disf.2cat $raw_train_file
+
+        # get the final training file
+        paste -d' ' $feature_file $raw_train_file'.verbal_dis' > $raw_train_file'.features_vd' && mv $raw_train_file'.features_vd' $feature_file
 	
 	# get the list of unique words
 	grep -o -E '[^\ ]*' $feature_file  | sort -u | less -N >$unique_words
@@ -81,18 +83,22 @@ do
 	
 	cat $file | cut -f6,8 > $raw_test_file
 
-	# clean the raw file to remove disfluencies
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f2 | sed 's/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
+	# clean the raw file to remove repetiotions and revisions
+        cat $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' | grep '^counselor\.' | cut -f2 | sed 's/([^)]*)//g;s/\[[^]]*\]//g;s/[a-z]*\*//g;s/_/ /g;s/(//g;s/)//g;s/{//g;s/}//g'| sed s/\ "'"\ /\ /g | sed s/$/\./g > $to_tokenize_test_file
 
-        sed 's/([^)]*)//g' $raw_test_file | sed 's/\[laugh\]//g;s/\[laughs\]//g;s/\[laughter\]//g;s/{ laugh]//g' | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' | grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
+        cat $raw_test_file | sed 's/\[laugh\]/LAUGH/g;s/\[laughs\]/LAUGH/g;s/\[laughter\]/LAUGH/g;s/{ laugh]/LAUGH/g' | sed 's/( um )/ um /g;s/( uh )/ uh /g;s/( eh )/ eh /g;s/( ah )/ ah /g' |grep '^counselor\.' | cut -f1 | sed 's/counselor.quc/couns.ques/g;s/counselor.quo/couns.ques/g;s/counselor.gi/couns.gi/g;s/counselor.fa/couns.fa/g;s/counselor.rec/couns.ref/g;s/counselor.res/couns.ref/g' | sed 's/counselor.*/couns.other/g' > $test_lables_file
 
         moses_scripts/tokenizer/tokenizer.perl < $to_tokenize_test_file >$test_tokenized_file
-       
-	cat $test_tokenized_file | sed 's/ um / /g;s/ uh / /g;s/ eh / /g;s/ ah / /g' |sed 's/^um / /g;s/^uh / /g;s/^eh / /g;s/^ah / /g' | sed 's/ um$/ /g;s/ uh$/ /g;s/ eh$/ /g;s/ ah$/ /g' > $test_tokenized_file.'tmp' && mv $test_tokenized_file.'tmp' $test_tokenized_file
- 
+        
         paste -d'_' <(sed 's/\ /\n/g' $test_tokenized_file) <(sed 's/\ /\n/g' $test_tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' > $test_bigram_file
  	# get the file with features and lables
         paste -d' ' <(sed 's/\.$//g' $test_tokenized_file) <(cat $test_bigram_file) | sed 's/  / /g' > $test_feature_file
+
+	# get the verbal disfluency features
+        ./get_verbal_disf.2cat $raw_test_file
+
+        # get the final training file
+        paste -d' ' $test_feature_file $raw_test_file'.verbal_dis' > $raw_test_file'.features_vd' && mv $raw_test_file'.features_vd' $test_feature_file
         
         # get the list of unique words
         grep -o -E '[^\ ]*' $test_feature_file  | sort -u | less -N >$test_unique_words

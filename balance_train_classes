@@ -1,0 +1,19 @@
+#! /bin/bash
+
+# balance the classes so that the number of instances in each class in equal to the number of instances in least representated class
+train_file=$1
+num_gi=$(grep '^couns\.gi' $train_file| wc -l)
+num_ques=$(grep '^couns\.ques' $train_file| wc -l)
+num_fa=$(grep '^couns\.fa' $train_file| wc -l)
+num_ref=$(grep '^couns\.ref' $train_file| wc -l)
+num_other=$(grep '^couns\.other' $train_file| wc -l)
+
+nums=($num_gi $num_ques $num_fa $num_ref $num_other)
+mins=200000
+for n in "${nums[@]}" ; do
+    ((n < mins)) && mins=$n
+done
+
+echo "the number of instances in each class is set to : " $mins
+
+cat <(grep '^couns\.gi' $train_file| head -n $mins) <(grep '^couns\.ques' $train_file| head -n $mins) <(grep '^couns\.fa' $train_file| head -n $mins) <(grep '^couns\.ref' $train_file| head -n $mins) <(grep '^couns\.other' $train_file| head -n $mins) > $train_file'.balanced'

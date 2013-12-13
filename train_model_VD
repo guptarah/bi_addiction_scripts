@@ -2,15 +2,15 @@
 
 annotation_dir=$1
 
-rm -r ../data_splits
-mkdir ../data_splits
+rm -r ../data_splits_VD
+mkdir ../data_splits_VD
 
 for file in $annotation_dir/*    # leave one file out
 do
 
 	echo "performing experiment for file :"$(basename $file)
 
-	save_dir='../data_splits/'$(basename $file)
+	save_dir='../data_splits_VD/'$(basename $file)
 	mkdir $save_dir 
 	raw_train_file=$save_dir'/raw_train'
 	to_tokenize_train_file=$raw_train_file'.to_tokenize'
@@ -45,6 +45,12 @@ do
 
 	# get the file with features and lables
 	paste -d' ' <(sed 's/\.$//g' $tokenized_file) <(cat $bigram_file) | sed 's/  / /g' > $feature_file
+
+	# get the verbal disfluency features
+        ./get_verbal_disf $raw_train_file
+
+        # get the final training file
+        paste -d' ' $feature_file $raw_train_file'.verbal_dis' > $raw_train_file'.features_vd' && mv $raw_train_file'.features_vd' $feature_file
 	
 	# get the list of unique words
 	grep -o -E '[^\ ]*' $feature_file  | sort -u | less -N >$unique_words
@@ -93,6 +99,12 @@ do
         paste -d'_' <(sed 's/\ /\n/g' $test_tokenized_file) <(sed 's/\ /\n/g' $test_tokenized_file | sed '1d') | tr '\n' ' ' | sed 's/\ \._[^\ ]*/\n/g' | sed 's/^ //g' > $test_bigram_file
  	# get the file with features and lables
         paste -d' ' <(sed 's/\.$//g' $test_tokenized_file) <(cat $test_bigram_file) | sed 's/  / /g' > $test_feature_file
+
+	# get the verbal disfluency features
+        ./get_verbal_disf $raw_test_file
+
+        # get the final training file
+        paste -d' ' $test_feature_file $raw_test_file'.verbal_dis' > $raw_test_file'.features_vd' && mv $raw_test_file'.features_vd' $test_feature_file
         
         # get the list of unique words
         grep -o -E '[^\ ]*' $test_feature_file  | sort -u | less -N >$test_unique_words
